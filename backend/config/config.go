@@ -8,11 +8,12 @@ import (
 )
 
 type Config struct {
-	DatabaseURL string
-	SupabaseURL string
-	SupabaseKey string
+	DatabaseURL  string
+	SupabaseURL  string
+	SupabaseKey  string
+	JWTSecret    string
 	GeminiAPIKey string
-	Port        string
+	Port         string
 }
 
 func Load() *Config {
@@ -29,6 +30,7 @@ func Load() *Config {
 		DatabaseURL:  os.Getenv("DATABASE_URL"),
 		SupabaseURL:  os.Getenv("SUPABASE_URL"),
 		SupabaseKey:  os.Getenv("SUPABASE_KEY"),
+		JWTSecret:    os.Getenv("SUPABASE_JWT_SECRET"),
 		GeminiAPIKey: os.Getenv("GEMINI_API_KEY"),
 		Port:         port,
 	}
