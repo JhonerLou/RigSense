@@ -1,23 +1,74 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import { Thermometer, Wind, Zap, Activity, Server, Cpu, Filter, Plus } from 'lucide-react';
+import { Thermometer, Wind, Zap, Activity, Server, Cpu, Filter, Plus, Loader2 } from 'lucide-react';
 import AddDeviceModal from '@/components/AddDeviceModal';
-
-const mockChartData = [
-  { time: '08:00', dust: 12, temp: 22, humidity: 45 },
-  { time: '10:00', dust: 15, temp: 23, humidity: 48 },
-  { time: '12:00', dust: 11, temp: 24, humidity: 46 },
-  { time: '14:00', dust: 18, temp: 25, humidity: 42 },
-  { time: '16:00', dust: 14, temp: 23, humidity: 44 },
-];
+import { createClient } from '@/utils/supabase/client';
 
 export default function WorkspaceClient({ workspace, initialDevices }: { workspace: Record<string, any>; initialDevices: any[] }) {
   const isAC = workspace.facility_type === 'AC';
   const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
+  const [telemetry, setTelemetry] = useState<any[]>([]);
+  const [latestStats, setLatestStats] = useState({ temp: 0, hum: 0, dust: 0, power: 0 });
+  const [isAiLoading, setIsAiLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    const fetchAITelemetry = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        const res = await fetch(`http://localhost:8080/api/workspaces/${workspace.id}/ai-telemetry`, {
+          headers: { Authorization: `Bearer ${session?.access_token}` }
+        });
+        
+        if (res.ok && isMounted) {
+          const result = await res.json();
+          const liveData = result.data;
+          
+          // Format time as HH:MM:SS
+          const timeStr = new Date(liveData.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          const newPoint = { 
+            time: timeStr, 
+            dust: liveData.dust_level, 
+            temp: liveData.temperature, 
+            humidity: liveData.humidity 
+          };
+          
+          setLatestStats({
+            temp: liveData.temperature,
+            hum: liveData.humidity,
+            dust: liveData.dust_level,
+            power: liveData.power_usage
+          });
+
+          setTelemetry(prev => {
+            const next = [...prev, newPoint];
+            if (next.length > 7) return next.slice(next.length - 7); // keep last 7 points
+            return next;
+          });
+          setIsAiLoading(false);
+        }
+      } catch (err) {
+        console.error("Failed to fetch AI telemetry:", err);
+      }
+    };
+
+    // Fetch immediately
+    fetchAITelemetry();
+    
+    // Then poll every 10 seconds
+    const interval = setInterval(fetchAITelemetry, 10000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [workspace.id]);
   
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -25,84 +76,94 @@ export default function WorkspaceClient({ workspace, initialDevices }: { workspa
       {/* Header Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Temp Card */}
-        <div className="bg-white/60 dark:bg-neutral-900/50 backdrop-blur-xl border border-slate-200 dark:border-neutral-800/50 rounded-3xl p-6 shadow-sm transition-colors">
-          <div className="flex items-start justify-between">
+        <div className="bg-slate-900/40 dark:bg-neutral-900/50 backdrop-blur-xl border border-slate-800 dark:border-neutral-800/50 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="flex items-start justify-between relative z-10">
             <div>
-              <p className="text-slate-500 dark:text-neutral-400 text-sm font-medium">Avg Temperature</p>
-              <h3 className="text-3xl font-bold text-slate-800 dark:text-neutral-100 mt-1">
-                {isAC ? '22.4°C' : '28.1°C'}
+              <p className="text-slate-400 dark:text-neutral-400 text-sm font-medium mb-1 flex items-center gap-2">
+                Avg Temperature {isAiLoading && <Loader2 className="w-3 h-3 animate-spin text-blue-400" />}
+              </p>
+              <h3 className="text-3xl font-bold text-white mb-2 tracking-tight">
+                {latestStats.temp > 0 ? latestStats.temp.toFixed(1) : '--'}°C
               </h3>
+              <p className="text-sm font-medium">
+                <span className={latestStats.temp > (isAC ? 25 : 30) ? 'text-red-400' : 'text-green-400'}>
+                  {latestStats.temp > (isAC ? 25 : 30) ? 'Warning' : 'Optimal'}
+                </span>
+                <span className="text-slate-500"> range</span>
+              </p>
             </div>
-            <div className={`p-3 rounded-2xl ${isAC ? 'bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400'}`}>
-              <Thermometer className="w-6 h-6" />
+            <div className="p-3 bg-orange-500/10 rounded-2xl">
+              <Thermometer className="w-6 h-6 text-orange-400" />
             </div>
-          </div>
-          <div className="mt-4 flex items-center text-sm">
-            <span className="text-green-600 dark:text-green-400 font-medium">-0.5°C</span>
-            <span className="text-slate-500 dark:text-neutral-500 ml-2">from yesterday</span>
           </div>
         </div>
 
         {/* Humidity Card */}
-        <div className="bg-white/60 dark:bg-neutral-900/50 backdrop-blur-xl border border-slate-200 dark:border-neutral-800/50 rounded-3xl p-6 shadow-sm transition-colors">
-          <div className="flex items-start justify-between">
+        <div className="bg-slate-900/40 dark:bg-neutral-900/50 backdrop-blur-xl border border-slate-800 dark:border-neutral-800/50 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="flex items-start justify-between relative z-10">
             <div>
-              <p className="text-slate-500 dark:text-neutral-400 text-sm font-medium">Humidity</p>
-              <h3 className="text-3xl font-bold text-slate-800 dark:text-neutral-100 mt-1">
-                42%
-              </h3>
-            </div>
-            <div className="p-3 rounded-2xl bg-cyan-100 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
-              <Wind className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-sm">
-            <span className="text-green-600 dark:text-green-400 font-medium">Optimal</span>
-            <span className="text-slate-500 dark:text-neutral-500 ml-2">range 40-50%</span>
-          </div>
-        </div>
-
-        {/* Dust Level Card */}
-        <div className="bg-white/60 dark:bg-neutral-900/50 backdrop-blur-xl border border-slate-200 dark:border-neutral-800/50 rounded-3xl p-6 shadow-sm transition-colors">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-slate-500 dark:text-neutral-400 text-sm font-medium">Airborne Dust</p>
-              <h3 className="text-3xl font-bold text-slate-800 dark:text-neutral-100 mt-1">
-                15 <span className="text-lg text-slate-500 dark:text-neutral-500">µg/m³</span>
-              </h3>
-            </div>
-            <div className="p-3 rounded-2xl bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400">
-              <Activity className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-sm">
-            <span className="text-red-600 dark:text-red-400 font-medium">+2 µg/m³</span>
-            <span className="text-slate-500 dark:text-neutral-500 ml-2">trending up</span>
-          </div>
-        </div>
-
-        {/* Filter Status / Power Usage Card */}
-        <div className="bg-white/60 dark:bg-neutral-900/50 backdrop-blur-xl border border-slate-200 dark:border-neutral-800/50 rounded-3xl p-6 shadow-sm transition-colors">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-slate-500 dark:text-neutral-400 text-sm font-medium">
-                {isAC ? 'HVAC Filter Status' : 'Est. Power Usage'}
+              <p className="text-slate-400 dark:text-neutral-400 text-sm font-medium mb-1 flex items-center gap-2">
+                Humidity {isAiLoading && <Loader2 className="w-3 h-3 animate-spin text-blue-400" />}
               </p>
-              <h3 className="text-3xl font-bold text-slate-800 dark:text-neutral-100 mt-1">
-                {isAC ? '82%' : '4.2 kW'}
+              <h3 className="text-3xl font-bold text-white mb-2 tracking-tight">
+                {latestStats.hum > 0 ? latestStats.hum.toFixed(0) : '--'}%
               </h3>
+              <p className="text-sm font-medium">
+                <span className={latestStats.hum > 60 ? 'text-orange-400' : 'text-green-400'}>
+                  {latestStats.hum > 60 ? 'High' : 'Optimal'}
+                </span>
+                <span className="text-slate-500"> range</span>
+              </p>
             </div>
-            <div className="p-3 rounded-2xl bg-yellow-100 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
-              {isAC ? <Filter className="w-6 h-6" /> : <Zap className="w-6 h-6" />}
+            <div className="p-3 bg-cyan-500/10 rounded-2xl">
+              <Wind className="w-6 h-6 text-cyan-400" />
             </div>
           </div>
-          <div className="mt-4 flex items-center text-sm">
-            <span className={isAC ? "text-green-600 dark:text-green-400 font-medium" : "text-slate-500 dark:text-neutral-400 font-medium"}>
-              {isAC ? 'Healthy' : 'Average load'}
-            </span>
-            <span className="text-slate-500 dark:text-neutral-500 ml-2">
-              {isAC ? 'Needs replace at 20%' : ''}
-            </span>
+        </div>
+
+        {/* Airborne Dust Card */}
+        <div className="bg-slate-900/40 dark:bg-neutral-900/50 backdrop-blur-xl border border-slate-800 dark:border-neutral-800/50 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="flex items-start justify-between relative z-10">
+            <div>
+              <p className="text-slate-400 dark:text-neutral-400 text-sm font-medium mb-1 flex items-center gap-2">
+                Airborne Dust {isAiLoading && <Loader2 className="w-3 h-3 animate-spin text-blue-400" />}
+              </p>
+              <h3 className="text-3xl font-bold text-white mb-2 tracking-tight flex items-baseline gap-1">
+                {latestStats.dust > 0 ? latestStats.dust.toFixed(0) : '--'} <span className="text-sm text-slate-400 font-normal">µg/m³</span>
+              </h3>
+              <p className="text-sm font-medium">
+                <span className={latestStats.dust > 30 ? 'text-red-400' : 'text-slate-500'}>
+                  {latestStats.dust > 30 ? 'High dust level' : 'Normal level'}
+                </span>
+              </p>
+            </div>
+            <div className="p-3 bg-purple-500/10 rounded-2xl">
+              <Activity className="w-6 h-6 text-purple-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Power Usage Card */}
+        <div className="bg-slate-900/40 dark:bg-neutral-900/50 backdrop-blur-xl border border-slate-800 dark:border-neutral-800/50 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="flex items-start justify-between relative z-10">
+            <div>
+              <p className="text-slate-400 dark:text-neutral-400 text-sm font-medium mb-1 flex items-center gap-2">
+                Est. Power Usage {isAiLoading && <Loader2 className="w-3 h-3 animate-spin text-blue-400" />}
+              </p>
+              <h3 className="text-3xl font-bold text-white mb-2 tracking-tight flex items-baseline gap-1">
+                {latestStats.power > 0 ? latestStats.power.toFixed(1) : '--'} <span className="text-sm text-slate-400 font-normal">kW</span>
+              </h3>
+              <p className="text-sm font-medium text-slate-500">
+                Average load
+              </p>
+            </div>
+            <div className="p-3 bg-yellow-500/10 rounded-2xl">
+              <Zap className="w-6 h-6 text-yellow-400" />
+            </div>
           </div>
         </div>
       </div>
@@ -110,47 +171,57 @@ export default function WorkspaceClient({ workspace, initialDevices }: { workspa
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Dust Trend Chart */}
-        <div className="bg-white/60 dark:bg-neutral-900/50 backdrop-blur-xl border border-slate-200 dark:border-neutral-800/50 rounded-3xl p-6 shadow-sm transition-colors">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-neutral-100 mb-6">Dust Level Fluctuation</h3>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockChartData}>
-                <defs>
-                  <linearGradient id="colorDust" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.2} />
-                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dx={-10} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#f8fafc' }}
-                  itemStyle={{ color: '#c4b5fd' }}
-                />
-                <Area type="monotone" dataKey="dust" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorDust)" />
-              </AreaChart>
-            </ResponsiveContainer>
+        <div className="bg-slate-900/40 dark:bg-neutral-900/50 backdrop-blur-xl border border-slate-800 dark:border-neutral-800/50 rounded-3xl p-6 shadow-xl relative overflow-hidden group transition-all">
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="relative z-10">
+            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+              Dust Level Fluctuation {isAiLoading && <Loader2 className="w-4 h-4 animate-spin text-purple-400" />}
+            </h3>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={telemetry} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="dustGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.4} />
+                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', color: '#f8fafc' }}
+                    itemStyle={{ color: '#a855f7' }}
+                  />
+                  <Area type="monotone" dataKey="dust" stroke="#a855f7" strokeWidth={3} fillOpacity={1} fill="url(#dustGradient)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
-        {/* Temperature & Humidity Chart */}
-        <div className="bg-white/60 dark:bg-neutral-900/50 backdrop-blur-xl border border-slate-200 dark:border-neutral-800/50 rounded-3xl p-6 shadow-sm transition-colors">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-neutral-100 mb-6">Env Variables (Temp & Humidity)</h3>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={mockChartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" opacity={0.2} />
-                <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dx={-10} yAxisId="left" />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dx={10} yAxisId="right" orientation="right" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#f8fafc' }}
-                />
-                <Line yAxisId="left" type="monotone" dataKey="temp" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} name="Temp (°C)" />
-                <Line yAxisId="right" type="monotone" dataKey="humidity" stroke="#06b6d4" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} name="Humidity (%)" />
-              </LineChart>
-            </ResponsiveContainer>
+        {/* Chart 2: Env Variables */}
+        <div className="bg-slate-900/40 dark:bg-neutral-900/50 backdrop-blur-xl border border-slate-800 dark:border-neutral-800/50 rounded-3xl p-6 shadow-xl relative overflow-hidden group transition-all">
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="relative z-10">
+            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+              Env Variables (Temp & Humidity) {isAiLoading && <Loader2 className="w-4 h-4 animate-spin text-blue-400" />}
+            </h3>
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={telemetry} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.4} />
+                  <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
+                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px', color: '#f8fafc' }}
+                  />
+                  <Line yAxisId="left" type="monotone" dataKey="temp" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#0f172a', strokeWidth: 2 }} activeDot={{ r: 6 }} name="Temp (°C)" />
+                  <Line yAxisId="right" type="monotone" dataKey="humidity" stroke="#06b6d4" strokeWidth={3} dot={{ r: 4, fill: '#0f172a', strokeWidth: 2 }} activeDot={{ r: 6 }} name="Humidity (%)" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       </div>

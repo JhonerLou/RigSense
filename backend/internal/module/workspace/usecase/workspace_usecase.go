@@ -2,9 +2,15 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"time"
 
 	"hardware-tracker-backend/internal/domain"
+
+	"github.com/google/generative-ai-go/genai"
+	"google.golang.org/api/option"
 )
 
 type workspaceUsecase struct {
@@ -78,4 +84,61 @@ func (u *workspaceUsecase) DeleteWorkspace(ctx context.Context, id string, userI
 	}
 
 	return nil
+}
+
+func (u *workspaceUsecase) GetAITelemetry(ctx context.Context, id string, userID string) (*domain.AITelemetryResponse, error) {
+	if id == "" || userID == "" {
+		return nil, fmt.Errorf("workspaceUsecase.GetAITelemetry: ID and userID are required")
+	}
+
+	ws, err := u.repo.GetByID(ctx, id, userID)
+	if err != nil {
+		return nil, fmt.Errorf("workspaceUsecase.GetAITelemetry repo.GetByID: %w", err)
+	}
+
+	apiKey := os.Getenv("GEMINI_API_KEY")
+	if apiKey == "" {
+		return nil, fmt.Errorf("GEMINI_API_KEY is not set in environment")
+	}
+
+	client, err := genai.NewClient(ctx, option.WithAPIKey(apiKey))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create gemini client: %w", err)
+	}
+	defer client.Close()
+
+	model := client.GenerativeModel("gemini-1.5-flash")
+	model.ResponseMIMEType = "application/json"
+
+	prompt := fmt.Errorf("You are an AI Virtual Sensor for a hardware workspace named '%s'. "+
+		"The environment type is '%s' and the baseline dust level is '%s'. "+
+		"Generate a realistic real-time telemetry reading for this room in pure JSON format. "+
+		"Rules: If AC, temperature is around 20-25C, humidity 40-55%%. If NON_AC, temperature 27-34C, humidity 60-80%%. "+
+		"Dust level: LOW (5-15 µg/m3), MEDIUM (15-35 µg/m3), HIGH (35-100 µg/m3). "+
+		"Power usage is typically between 0.5 to 5.0 kW based on typical hardware. "+
+		"Return strictly JSON with keys: temperature (float), humidity (float), dust_level (float), power_usage (float).",
+		ws.Name, ws.EnvironmentType, ws.DustLevel).Error()
+
+	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate AI content: %w", err)
+	}
+
+	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
+		return nil, fmt.Errorf("empty response from Gemini API")
+	}
+
+	part := resp.Candidates[0].Content.Parts[0]
+	textPart, ok := part.(genai.Text)
+	if !ok {
+		return nil, fmt.Errorf("unexpected response type from Gemini")
+	}
+
+	var telemetry domain.AITelemetryResponse
+	if err := json.Unmarshal([]byte(textPart), &telemetry); err != nil {
+		return nil, fmt.Errorf("failed to parse AI JSON response: %w", err)
+	}
+
+	telemetry.Timestamp = time.Now().Format(time.RFC3339)
+	return &telemetry, nil
 }

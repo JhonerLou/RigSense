@@ -22,6 +22,15 @@ type CreateWorkspaceRequest struct {
 	DustLevel       string `json:"dust_level" binding:"required,oneof=LOW MEDIUM HIGH"`
 }
 
+// AITelemetryResponse represents the AI-generated real-time telemetry data.
+type AITelemetryResponse struct {
+	Temperature float64 `json:"temperature"`
+	Humidity    float64 `json:"humidity"`
+	DustLevel   float64 `json:"dust_level"`
+	PowerUsage  float64 `json:"power_usage"`
+	Timestamp   string  `json:"timestamp"`
+}
+
 // WorkspaceRepository defines the data access contract for workspaces.
 // Repositories should only receive and return domain models.
 type WorkspaceRepository interface {
@@ -38,4 +47,5 @@ type WorkspaceUsecase interface {
 	GetWorkspace(ctx context.Context, id string, userID string) (*Workspace, error)
 	ListUserWorkspaces(ctx context.Context, userID string) ([]*Workspace, error)
 	DeleteWorkspace(ctx context.Context, id string, userID string) error
+	GetAITelemetry(ctx context.Context, id string, userID string) (*AITelemetryResponse, error)
 }

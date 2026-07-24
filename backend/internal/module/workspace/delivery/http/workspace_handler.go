@@ -25,6 +25,7 @@ func NewWorkspaceHandler(rg *gin.RouterGroup, usecase domain.WorkspaceUsecase) {
 		wsGroup.POST("", handler.Create)
 		wsGroup.GET("", handler.List)
 		wsGroup.GET("/:id", handler.Get)
+		wsGroup.GET("/:id/ai-telemetry", handler.GetAITelemetry)
 		wsGroup.DELETE("/:id", handler.Delete)
 	}
 }
@@ -112,4 +113,22 @@ func (h *WorkspaceHandler) Delete(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Workspace deleted successfully"})
+}
+
+func (h *WorkspaceHandler) GetAITelemetry(c *gin.Context) {
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userID := userIDVal.(string)
+	id := c.Param("id")
+
+	telemetry, err := h.usecase.GetAITelemetry(c.Request.Context(), id, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": telemetry})
 }
