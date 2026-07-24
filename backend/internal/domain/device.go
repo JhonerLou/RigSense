@@ -57,3 +57,25 @@ type CreateDeviceRequest struct {
 	PurchaseDate      *time.Time        `json:"purchase_date"`
 	EstimatedPrice    float64           `json:"estimated_price"`
 }
+
+type PartType string
+
+const (
+	PartTypeCPU         PartType = "CPU"
+	PartTypeGPU         PartType = "GPU"
+	PartTypeRAM         PartType = "RAM"
+	PartTypeStorage     PartType = "STORAGE"
+	PartTypePSU         PartType = "PSU"
+	PartTypeCooler      PartType = "COOLER"
+	PartTypeMotherboard PartType = "MOTHERBOARD"
+)
+
+type DevicePart struct {
+	ID                uuid.UUID  `json:"id"`
+	DeviceID          uuid.UUID  `json:"device_id"`
+	PartType          PartType   `json:"part_type"`
+	Name              string     `json:"name"`
+	PurchaseDate      *time.Time `json:"purchase_date,omitempty"`
+	WarrantyExpiresAt *time.Time `json:"warranty_expires_at,omitempty"`
+	CreatedAt         time.Time  `json:"created_at"`
+}
