@@ -13,13 +13,13 @@ const deviceSchema = z.object({
   category: z.enum(['PC_DESKTOP', 'LAPTOP', 'MONITOR', 'KEYBOARD', 'MOUSE', 'HEADSET']),
   workload_intensity: z.enum(['LIGHT', 'MEDIUM', 'HEAVY']),
   estimated_price: z.number().min(0, 'Estimated price must be a positive number'),
-  purchase_date: z.string().optional().transform(val => val ? new Date(val).toISOString() : undefined),
+  purchase_date: z.string().optional(),
   parts: z.array(
     z.object({
       part_type: z.enum(['CPU', 'GPU', 'RAM', 'STORAGE', 'PSU', 'COOLER', 'MOTHERBOARD']),
       name: z.string().min(1, 'Part name is required'),
-      purchase_date: z.string().optional().transform(val => val ? new Date(val).toISOString() : undefined),
-      warranty_expires_at: z.string().optional().transform(val => val ? new Date(val).toISOString() : undefined),
+      purchase_date: z.string().optional(),
+      warranty_expires_at: z.string().optional(),
     })
   ).optional(),
 });
@@ -59,6 +59,12 @@ export default function AddDeviceModal({ workspaceId, isOpen, onClose }: { works
       
       const payload = {
         ...data,
+        purchase_date: data.purchase_date ? new Date(data.purchase_date).toISOString() : undefined,
+        parts: data.parts?.map(p => ({
+          ...p,
+          purchase_date: p.purchase_date ? new Date(p.purchase_date).toISOString() : undefined,
+          warranty_expires_at: p.warranty_expires_at ? new Date(p.warranty_expires_at).toISOString() : undefined,
+        })),
         workspace_id: workspaceId,
       };
 
