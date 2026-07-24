@@ -17,6 +17,17 @@ export interface DeviceData {
   [key: string]: unknown;
 }
 
+export interface AIHealthScanResponse {
+  overall_health_score: number;
+  status: string;
+  issues: string[];
+  predictions: {
+    component: string;
+    estimated_days_until_failure: number;
+    recommended_action: string;
+  }[];
+}
+
 export default function WorkspaceClient({ workspace, initialDevices }: { workspace: Record<string, unknown>; initialDevices: DeviceData[] }) {
   const isAC = workspace.facility_type === 'AC';
   const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
@@ -27,7 +38,7 @@ export default function WorkspaceClient({ workspace, initialDevices }: { workspa
   // Health Scan State
   const [isHealthScanOpen, setIsHealthScanOpen] = useState(false);
   const [isHealthScanLoading, setIsHealthScanLoading] = useState(false);
-  const [healthScanData, setHealthScanData] = useState<Record<string, unknown> | null>(null);
+  const [healthScanData, setHealthScanData] = useState<AIHealthScanResponse | null>(null);
 
   const runHealthScan = async () => {
     setIsHealthScanOpen(true);
@@ -403,16 +414,16 @@ export default function WorkspaceClient({ workspace, initialDevices }: { workspa
                       <Zap className="w-5 h-5 text-blue-500" /> Predictive Maintenance
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {healthScanData.predictions?.map((pred: Record<string, unknown>, idx: number) => (
+                      {healthScanData.predictions?.map((pred, idx: number) => (
                         <div key={idx} className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 p-4 rounded-xl shadow-sm relative overflow-hidden group">
-                          <div className={`absolute top-0 left-0 w-1 h-full ${(pred.estimated_days_until_failure as number) < 30 ? 'bg-red-500' : 'bg-blue-500'}`}></div>
-                          <h5 className="font-bold text-slate-800 dark:text-white mb-1 pl-2">{pred.component as string}</h5>
+                          <div className={`absolute top-0 left-0 w-1 h-full ${pred.estimated_days_until_failure < 30 ? 'bg-red-500' : 'bg-blue-500'}`}></div>
+                          <h5 className="font-bold text-slate-800 dark:text-white mb-1 pl-2">{pred.component}</h5>
                           <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 pl-2">
-                            Est. Failure in: <strong className={(pred.estimated_days_until_failure as number) < 30 ? 'text-red-500' : 'text-slate-700 dark:text-slate-200'}>{pred.estimated_days_until_failure as number} days</strong>
+                            Est. Failure in: <strong className={pred.estimated_days_until_failure < 30 ? 'text-red-500' : 'text-slate-700 dark:text-slate-200'}>{pred.estimated_days_until_failure} days</strong>
                           </p>
                           <div className="pl-2">
                             <span className="text-xs font-medium uppercase tracking-wider text-slate-400 block mb-1">Recommendation</span>
-                            <p className="text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-neutral-800 p-2 rounded-lg">{pred.recommended_action as string}</p>
+                            <p className="text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-neutral-800 p-2 rounded-lg">{pred.recommended_action}</p>
                           </div>
                         </div>
                       ))}
