@@ -169,7 +169,7 @@ func (u *workspaceUsecase) GetAIHealthScan(ctx context.Context, id string, userI
 
 	// Fetch devices in this workspace
 	// Parse UUID since deviceRepo uses uuid.UUID
-	var devices []*domain.Device
+	// var devices []*domain.Device
 	if u.deviceRepo != nil {
 		// Attempt to parse string to UUID. Note: we need "github.com/google/uuid"
 		// If it's a UUID, we can fetch devices. Otherwise skip.

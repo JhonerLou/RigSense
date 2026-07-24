@@ -51,7 +51,7 @@ export default function SettingsPage() {
         
         // Restore local preferences
         if (typeof window !== 'undefined') {
-          const savedTheme = localStorage.getItem('theme') as any;
+          const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null;
           if (savedTheme) setTheme(savedTheme);
           
           const alerts = localStorage.getItem('emailAlerts');
@@ -108,9 +108,9 @@ export default function SettingsPage() {
         setSaveStatus('error');
         setErrorMessage(data.error || 'Failed to upload image');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setSaveStatus('error');
-      setErrorMessage(err.message);
+      setErrorMessage((err as Error).message);
     } finally {
       setIsUploading(false);
     }
@@ -206,7 +206,10 @@ export default function SettingsPage() {
                   <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center pb-8 border-b border-slate-100 dark:border-neutral-800">
                     <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden border-2 border-white dark:border-neutral-700 shadow-lg shrink-0">
                       {formData.avatarUrl ? (
-                        <img src={formData.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                        <>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={formData.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                        </>
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-3xl">
                           {formData.fullName ? formData.fullName.charAt(0).toUpperCase() : 'U'}
