@@ -1,21 +1,54 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { LayoutDashboard, BookOpen, Bot, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Bot, LogOut, Menu, X, Settings } from 'lucide-react';
 
 const navItems = [
   { name: 'My Workspaces', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Service Logbook', href: '/dashboard/logbook', icon: BookOpen },
   { name: 'AI Assistant', href: '/dashboard/ai', icon: Bot },
+  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ email: string; fullName: string; avatarUrl: string } | null>(null);
   const pathname = usePathname();
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const metadata = user.user_metadata || {};
+        setUserProfile({
+          email: user.email || 'No email',
+          fullName: metadata.full_name || 'Guest User',
+          avatarUrl: metadata.avatar_url || ''
+        });
+      }
+    };
+    fetchUser();
+    
+    // Subscribe to auth changes (when they update profile)
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        const metadata = session.user.user_metadata || {};
+        setUserProfile({
+          email: session.user.email || 'No email',
+          fullName: metadata.full_name || 'Guest User',
+          avatarUrl: metadata.avatar_url || ''
+        });
+      }
+    });
+    
+    return () => { subscription.unsubscribe(); }
+  }, []);
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -75,6 +108,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="p-4 border-t border-slate-200 dark:border-neutral-800/50 transition-colors">
+          {userProfile && (
+            <Link href="/dashboard/settings" className="flex items-center gap-3 mb-4 px-2 hover:bg-slate-100 dark:hover:bg-neutral-800/50 p-2 rounded-xl transition-colors cursor-pointer group/profile">
+              {userProfile.avatarUrl ? (
+                <img src={userProfile.avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full object-cover shadow-md border border-slate-200 dark:border-neutral-700" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                  {userProfile.fullName.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="flex-1 overflow-hidden">
+                <p className="text-sm font-semibold text-slate-800 dark:text-neutral-200 truncate group-hover/profile:text-blue-500 transition-colors">{userProfile.fullName}</p>
+                <p className="text-xs text-slate-500 dark:text-neutral-500 truncate">{userProfile.email}</p>
+              </div>
+            </Link>
+          )}
           <button
             onClick={handleLogout}
             className="flex items-center space-x-3 px-4 py-3 w-full rounded-xl text-slate-500 dark:text-neutral-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400 transition-all duration-200 group"

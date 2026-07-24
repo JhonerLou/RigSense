@@ -31,6 +31,21 @@ type AITelemetryResponse struct {
 	Timestamp   string  `json:"timestamp"`
 }
 
+// AIHealthScanResponse represents the predictive maintenance analysis.
+type AIHealthScanResponse struct {
+	OverallHealthScore int                       `json:"overall_health_score"` // 0-100
+	Status             string                    `json:"status"`               // "Critical", "Warning", "Healthy"
+	Issues             []string                  `json:"issues"`
+	Predictions        []AIMaintenancePrediction `json:"predictions"`
+}
+
+// AIMaintenancePrediction represents a prediction for a single component/device.
+type AIMaintenancePrediction struct {
+	Component                  string `json:"component"`
+	EstimatedDaysUntilFailure  int    `json:"estimated_days_until_failure"`
+	RecommendedAction          string `json:"recommended_action"`
+}
+
 // WorkspaceRepository defines the data access contract for workspaces.
 // Repositories should only receive and return domain models.
 type WorkspaceRepository interface {
@@ -48,4 +63,5 @@ type WorkspaceUsecase interface {
 	ListUserWorkspaces(ctx context.Context, userID string) ([]*Workspace, error)
 	DeleteWorkspace(ctx context.Context, id string, userID string) error
 	GetAITelemetry(ctx context.Context, id string, userID string) (*AITelemetryResponse, error)
+	GetAIHealthScan(ctx context.Context, id string, userID string) (*AIHealthScanResponse, error)
 }

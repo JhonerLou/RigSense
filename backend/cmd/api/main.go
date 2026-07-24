@@ -48,11 +48,13 @@ func main() {
 
 	// Wire Workspace Module
 	wsRepo := workspaceRepo.NewWorkspaceRepository(dbPool)
-	wsUsecase := workspaceUsecase.NewWorkspaceUsecase(wsRepo)
 
 	// Wire Device Module
 	devRepo := deviceRepo.NewDeviceRepository(dbPool)
 	devUsecase := deviceUsecase.NewDeviceUsecase(devRepo, wsRepo)
+
+	// Workspace Usecase needs DeviceRepo
+	wsUsecase := workspaceUsecase.NewWorkspaceUsecase(wsRepo, devRepo)
 
 	// Wire Maintenance Module
 	maintRepo := maintenanceRepo.NewMaintenanceRepository(dbPool)

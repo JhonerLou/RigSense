@@ -26,6 +26,7 @@ func NewWorkspaceHandler(rg *gin.RouterGroup, usecase domain.WorkspaceUsecase) {
 		wsGroup.GET("", handler.List)
 		wsGroup.GET("/:id", handler.Get)
 		wsGroup.GET("/:id/ai-telemetry", handler.GetAITelemetry)
+		wsGroup.GET("/:id/health-scan", handler.GetAIHealthScan)
 		wsGroup.DELETE("/:id", handler.Delete)
 	}
 }
@@ -131,4 +132,22 @@ func (h *WorkspaceHandler) GetAITelemetry(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": telemetry})
+}
+
+func (h *WorkspaceHandler) GetAIHealthScan(c *gin.Context) {
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userID := userIDVal.(string)
+	id := c.Param("id")
+
+	healthScan, err := h.usecase.GetAIHealthScan(c.Request.Context(), id, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": healthScan})
 }
