@@ -17,7 +17,7 @@ export default async function WorkspaceDetailsPage({
   const token = session?.access_token;
 
   let workspace = null;
-  let devices: any[] = [];
+  let devices: unknown[] = [];
   let errorMsg = null;
 
   try {

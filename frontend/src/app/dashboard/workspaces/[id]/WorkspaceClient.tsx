@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react';
 import { 
   LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import { Thermometer, Wind, Zap, Activity, Server, Cpu, Filter, Plus, Loader2 } from 'lucide-react';
+import { Thermometer, Wind, Zap, Activity, Server, Cpu, Plus, Loader2 } from 'lucide-react';
 import AddDeviceModal from '@/components/AddDeviceModal';
 import { createClient } from '@/utils/supabase/client';
 
-export default function WorkspaceClient({ workspace, initialDevices }: { workspace: Record<string, any>; initialDevices: any[] }) {
+export default function WorkspaceClient({ workspace, initialDevices }: { workspace: Record<string, unknown>; initialDevices: unknown[] }) {
   const isAC = workspace.facility_type === 'AC';
   const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
-  const [telemetry, setTelemetry] = useState<any[]>([]);
+  const [telemetry, setTelemetry] = useState<Record<string, unknown>[]>([]);
   const [latestStats, setLatestStats] = useState({ temp: 0, hum: 0, dust: 0, power: 0 });
   const [isAiLoading, setIsAiLoading] = useState(true);
 
@@ -292,7 +292,7 @@ export default function WorkspaceClient({ workspace, initialDevices }: { workspa
               {initialDevices.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-12 text-center text-slate-500 dark:text-neutral-500">
-                    No devices registered yet. Click "Register Device" to add one.
+                    No devices registered yet. Click &quot;Register Device&quot; to add one.
                   </td>
                 </tr>
               ) : (

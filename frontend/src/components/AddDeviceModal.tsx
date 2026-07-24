@@ -194,7 +194,7 @@ export default function AddDeviceModal({ workspaceId, isOpen, onClose }: { works
             <div className="space-y-4">
               {fields.length === 0 ? (
                 <div className="text-center py-6 bg-slate-50 dark:bg-neutral-900/30 rounded-xl border border-dashed border-slate-200 dark:border-neutral-800 text-sm text-slate-500 dark:text-neutral-500">
-                  No parts added yet. Click "+ Add Part" to add CPU, RAM, etc.
+                  No parts added yet. Click &quot;+ Add Part&quot; to add CPU, RAM, etc.
                 </div>
               ) : (
                 fields.map((field, index) => (
