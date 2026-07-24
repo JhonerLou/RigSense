@@ -107,7 +107,7 @@ func (u *workspaceUsecase) GetAITelemetry(ctx context.Context, id string, userID
 	}
 	defer client.Close()
 
-	model := client.GenerativeModel("gemini-1.5-flash")
+	model := client.GenerativeModel("gemini-flash-latest")
 	model.ResponseMIMEType = "application/json"
 
 	prompt := fmt.Errorf("You are an AI Virtual Sensor for a hardware workspace named '%s'. "+
