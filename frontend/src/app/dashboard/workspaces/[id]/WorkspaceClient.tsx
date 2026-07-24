@@ -8,7 +8,16 @@ import { Thermometer, Wind, Zap, Activity, Server, Cpu, Plus, Loader2, AlertCirc
 import AddDeviceModal from '@/components/AddDeviceModal';
 import { createClient } from '@/utils/supabase/client';
 
-export default function WorkspaceClient({ workspace, initialDevices }: { workspace: Record<string, unknown>; initialDevices: unknown[] }) {
+export interface DeviceData {
+  id: string;
+  name: string;
+  category: string;
+  workload_intensity: string;
+  created_at: string;
+  [key: string]: unknown;
+}
+
+export default function WorkspaceClient({ workspace, initialDevices }: { workspace: Record<string, unknown>; initialDevices: DeviceData[] }) {
   const isAC = workspace.facility_type === 'AC';
   const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
   const [telemetry, setTelemetry] = useState<Record<string, unknown>[]>([]);

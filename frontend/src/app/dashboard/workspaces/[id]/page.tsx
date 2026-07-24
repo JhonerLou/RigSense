@@ -2,7 +2,7 @@ import { createClient } from '@/utils/supabase/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, AlertTriangle } from 'lucide-react';
-import WorkspaceClient from './WorkspaceClient';
+import WorkspaceClient, { DeviceData } from './WorkspaceClient';
 
 export default async function WorkspaceDetailsPage({
   params,
@@ -17,7 +17,7 @@ export default async function WorkspaceDetailsPage({
   const token = session?.access_token;
 
   let workspace = null;
-  let devices: unknown[] = [];
+  let devices: DeviceData[] = [];
   let errorMsg = null;
 
   try {
