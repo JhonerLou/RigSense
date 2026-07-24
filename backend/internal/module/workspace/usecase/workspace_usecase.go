@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"hardware-tracker-backend/internal/domain"
@@ -134,9 +135,21 @@ func (u *workspaceUsecase) GetAITelemetry(ctx context.Context, id string, userID
 		return nil, fmt.Errorf("unexpected response type from Gemini")
 	}
 
+	rawJSON := string(textPart)
+	rawJSON = strings.TrimSpace(rawJSON)
+	if strings.HasPrefix(rawJSON, "```json") {
+		rawJSON = strings.TrimPrefix(rawJSON, "```json")
+		rawJSON = strings.TrimSuffix(rawJSON, "```")
+		rawJSON = strings.TrimSpace(rawJSON)
+	} else if strings.HasPrefix(rawJSON, "```") {
+		rawJSON = strings.TrimPrefix(rawJSON, "```")
+		rawJSON = strings.TrimSuffix(rawJSON, "```")
+		rawJSON = strings.TrimSpace(rawJSON)
+	}
+
 	var telemetry domain.AITelemetryResponse
-	if err := json.Unmarshal([]byte(textPart), &telemetry); err != nil {
-		return nil, fmt.Errorf("failed to parse AI JSON response: %w", err)
+	if err := json.Unmarshal([]byte(rawJSON), &telemetry); err != nil {
+		return nil, fmt.Errorf("failed to parse AI JSON response: %w, raw: %s", err, rawJSON)
 	}
 
 	telemetry.Timestamp = time.Now().Format(time.RFC3339)
