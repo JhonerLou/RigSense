@@ -25,34 +25,34 @@ INSERT INTO devices (id, workspace_id, name, category, workload_intensity, purch
 -- Insert Maintenance Tasks (Skenario Jatuh Tempo)
 INSERT INTO maintenance_tasks (id, device_id, task_name, base_interval_months, last_performed_at, next_due_date, risk_impact_cost, status) VALUES 
 -- Tugas 1: Repaste PC Desktop (Aman, baru dilakukan bulan lalu)
-('t1111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 'Ganti Thermal Paste (Kryonaut) & Bersihkan Kipas CPU', 12, CURRENT_DATE - INTERVAL '1 month', CURRENT_DATE + INTERVAL '11 months', 4500000.00, 'OK'),
+('f1111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 'Ganti Thermal Paste (Kryonaut) & Bersihkan Kipas CPU', 12, CURRENT_DATE - INTERVAL '1 month', CURRENT_DATE + INTERVAL '11 months', 4500000.00, 'OK'),
 
 -- Tugas 2: Ganti Switch Mouse Logitech (DUE SOON - Hampir kena double click issue)
-('t2222222-2222-2222-2222-222222222222', 'd4444444-4444-4444-4444-444444444444', 'Ganti Switch Kailh Silent Mute (Rawan Double Click)', 24, '2023-01-15', CURRENT_DATE + INTERVAL '7 days', 250000.00, 'DUE_SOON'),
+('f2222222-2222-2222-2222-222222222222', 'd4444444-4444-4444-4444-444444444444', 'Ganti Switch Kailh Silent Mute (Rawan Double Click)', 24, '2023-01-15', CURRENT_DATE + INTERVAL '7 days', 250000.00, 'DUE_SOON'),
 
 -- Tugas 3: Servis Kipas Laptop ROG (OVERDUE - Di ruang tanpa AC dan berdebu tinggi, bahaya overheat)
-('t3333333-3333-3333-3333-333333333333', 'd5555555-5555-5555-5555-555555555555', 'Deep Cleaning Kipas Laptop & Ganti Liquid Metal', 6, '2023-02-10', CURRENT_DATE - INTERVAL '30 days', 8500000.00, 'OVERDUE');
+('f3333333-3333-3333-3333-333333333333', 'd5555555-5555-5555-5555-555555555555', 'Deep Cleaning Kipas Laptop & Ganti Liquid Metal', 6, '2023-02-10', CURRENT_DATE - INTERVAL '30 days', 8500000.00, 'OVERDUE');
 
 
 -- Insert Service Logs (Catatan Servis Historis)
 INSERT INTO service_logs (task_id, performed_at, cost_spent, notes) VALUES 
 -- Log untuk repaste PC Desktop bulan lalu
-('t1111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 month', 150000.00, 'Repaste menggunakan Thermal Grizzly Kryonaut. Suhu turun dari 85C ke 65C saat full load rendering.'),
+('f1111111-1111-1111-1111-111111111111', CURRENT_DATE - INTERVAL '1 month', 150000.00, 'Repaste menggunakan Thermal Grizzly Kryonaut. Suhu turun dari 85C ke 65C saat full load rendering.'),
 
 -- Log untuk servis kipas ROG lama (Tahun 2023)
-('t3333333-3333-3333-3333-333333333333', '2023-02-10', 250000.00, 'Bawa ke ASUS Service Center Roxy. Dibersihkan debu membandel di heatsink. Ganti Thermal Grizzly Conductonaut.');
+('f3333333-3333-3333-3333-333333333333', '2023-02-10', 250000.00, 'Bawa ke ASUS Service Center Roxy. Dibersihkan debu membandel di heatsink. Ganti Thermal Grizzly Conductonaut.');
 
 
 -- Insert Device Parts (Komponen Spesifik)
 INSERT INTO device_parts (id, device_id, part_type, name, purchase_date, warranty_expires_at) VALUES
 -- Komponen untuk PC Custom Desktop
-('p1111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 'CPU', 'Intel Core i5-13400F', '2023-05-10', '2026-05-10'),
-('p2222222-2222-2222-2222-222222222222', 'd1111111-1111-1111-1111-111111111111', 'GPU', 'ZOTAC GAMING GeForce RTX 4060 8GB', '2023-05-10', '2026-05-10'),
-('p3333333-3333-3333-3333-333333333333', 'd1111111-1111-1111-1111-111111111111', 'RAM', 'Corsair Vengeance RGB 32GB (2x16GB) DDR5 6000MHz', '2023-05-10', '2033-05-10'),
-('p4444444-4444-4444-4444-444444444444', 'd1111111-1111-1111-1111-111111111111', 'MOTHERBOARD', 'ASRock B760M Steel Legend WiFi', '2023-05-10', '2026-05-10'),
-('p5555555-5555-5555-5555-555555555555', 'd1111111-1111-1111-1111-111111111111', 'PSU', 'Corsair RM650 80+ Gold', '2023-05-10', '2030-05-10'),
-('p6666666-6666-6666-6666-666666666666', 'd1111111-1111-1111-1111-111111111111', 'COOLER', 'Deepcool AK400 Digital', '2023-05-10', '2024-05-10'),
+('e1111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 'CPU', 'Intel Core i5-13400F', '2023-05-10', '2026-05-10'),
+('e2222222-2222-2222-2222-222222222222', 'd1111111-1111-1111-1111-111111111111', 'GPU', 'ZOTAC GAMING GeForce RTX 4060 8GB', '2023-05-10', '2026-05-10'),
+('e3333333-3333-3333-3333-333333333333', 'd1111111-1111-1111-1111-111111111111', 'RAM', 'Corsair Vengeance RGB 32GB (2x16GB) DDR5 6000MHz', '2023-05-10', '2033-05-10'),
+('e4444444-4444-4444-4444-444444444444', 'd1111111-1111-1111-1111-111111111111', 'MOTHERBOARD', 'ASRock B760M Steel Legend WiFi', '2023-05-10', '2026-05-10'),
+('e5555555-5555-5555-5555-555555555555', 'd1111111-1111-1111-1111-111111111111', 'PSU', 'Corsair RM650 80+ Gold', '2023-05-10', '2030-05-10'),
+('e6666666-6666-6666-6666-666666666666', 'd1111111-1111-1111-1111-111111111111', 'COOLER', 'Deepcool AK400 Digital', '2023-05-10', '2024-05-10'),
 
 -- Komponen penting untuk Laptop ROG G14 (yang biasa rawan rusak/perlu diganti)
-('p7777777-7777-7777-7777-777777777777', 'd5555555-5555-5555-5555-555555555555', 'STORAGE', 'Samsung 980 PRO 1TB PCIe 4.0 NVMe', '2022-08-10', '2027-08-10'),
-('p8888888-8888-8888-8888-888888888888', 'd5555555-5555-5555-5555-555555555555', 'COOLER', 'Dual Fan Assembly (CPU & GPU)', '2022-08-10', '2024-08-10');
+('e7777777-7777-7777-7777-777777777777', 'd5555555-5555-5555-5555-555555555555', 'STORAGE', 'Samsung 980 PRO 1TB PCIe 4.0 NVMe', '2022-08-10', '2027-08-10'),
+('e8888888-8888-8888-8888-888888888888', 'd5555555-5555-5555-5555-555555555555', 'COOLER', 'Dual Fan Assembly (CPU & GPU)', '2022-08-10', '2024-08-10');
