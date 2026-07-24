@@ -1,27 +1,23 @@
 'use client';
 
+import { useState } from 'react';
 import { 
   LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import { Thermometer, Wind, Zap, Activity, Server, Cpu, Filter } from 'lucide-react';
+import { Thermometer, Wind, Zap, Activity, Server, Cpu, Filter, Plus } from 'lucide-react';
+import AddDeviceModal from '@/components/AddDeviceModal';
 
 const mockChartData = [
   { time: '08:00', dust: 12, temp: 22, humidity: 45 },
-  { time: '10:00', dust: 15, temp: 23, humidity: 42 },
-  { time: '12:00', dust: 25, temp: 24, humidity: 38 },
-  { time: '14:00', dust: 28, temp: 25, humidity: 35 },
-  { time: '16:00', dust: 20, temp: 24, humidity: 40 },
-  { time: '18:00', dust: 14, temp: 22, humidity: 44 },
+  { time: '10:00', dust: 15, temp: 23, humidity: 48 },
+  { time: '12:00', dust: 11, temp: 24, humidity: 46 },
+  { time: '14:00', dust: 18, temp: 25, humidity: 42 },
+  { time: '16:00', dust: 14, temp: 23, humidity: 44 },
 ];
 
-const mockDevices = [
-  { id: '1', name: 'Main Server Rack A', type: 'Server', status: 'Online', lastMaintenance: '2 days ago' },
-  { id: '2', name: 'Network Switch Core', type: 'Networking', status: 'Warning', lastMaintenance: '5 months ago' },
-  { id: '3', name: 'Cooling Unit 1', type: 'HVAC', status: 'Online', lastMaintenance: '1 week ago' },
-];
-
-export default function WorkspaceClient({ workspace }: { workspace: Record<string, unknown> }) {
+export default function WorkspaceClient({ workspace, initialDevices }: { workspace: Record<string, any>; initialDevices: any[] }) {
   const isAC = workspace.facility_type === 'AC';
+  const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
   
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -161,10 +157,17 @@ export default function WorkspaceClient({ workspace }: { workspace: Record<strin
 
       {/* Devices List Table */}
       <div className="bg-white/60 dark:bg-neutral-900/50 backdrop-blur-xl border border-slate-200 dark:border-neutral-800/50 rounded-3xl p-6 shadow-sm transition-colors overflow-hidden">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-neutral-100">Registered Devices</h3>
-          <button className="text-sm bg-slate-900 dark:bg-white text-white dark:text-neutral-900 px-4 py-2 rounded-xl font-medium hover:bg-slate-800 dark:hover:bg-neutral-200 transition-colors">
-            + Register Device
+        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-neutral-800/50">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-neutral-100 flex items-center gap-2">
+            <Server className="w-5 h-5 text-blue-500" />
+            Registered Devices
+          </h2>
+          <button 
+            onClick={() => setIsAddDeviceOpen(true)}
+            className="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 rounded-xl font-medium hover:bg-slate-800 dark:hover:bg-neutral-200 transition-colors text-sm shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Register Device
           </button>
         </div>
         
@@ -175,36 +178,55 @@ export default function WorkspaceClient({ workspace }: { workspace: Record<strin
                 <th className="pb-3 font-medium px-4">Device Name</th>
                 <th className="pb-3 font-medium px-4">Category</th>
                 <th className="pb-3 font-medium px-4">Status</th>
-                <th className="pb-3 font-medium px-4 text-right">Last Maintenance</th>
+                <th className="pb-3 font-medium px-4 text-right">Registration Date</th>
               </tr>
             </thead>
-            <tbody className="text-sm">
-              {mockDevices.map((device) => (
-                <tr key={device.id} className="border-b border-slate-100 dark:border-neutral-800/30 hover:bg-slate-50 dark:hover:bg-neutral-800/30 transition-colors">
-                  <td className="py-4 px-4 font-medium text-slate-800 dark:text-neutral-200 flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-slate-100 dark:bg-neutral-800">
-                      {device.type === 'Server' ? <Server className="w-4 h-4 text-blue-500" /> : <Cpu className="w-4 h-4 text-purple-500" />}
-                    </div>
-                    {device.name}
+            <tbody className="divide-y divide-slate-200 dark:divide-neutral-800/50">
+              {initialDevices.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center text-slate-500 dark:text-neutral-500">
+                    No devices registered yet. Click "Register Device" to add one.
                   </td>
-                  <td className="py-4 px-4 text-slate-600 dark:text-neutral-400">{device.type}</td>
-                  <td className="py-4 px-4">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                      device.status === 'Online' 
-                        ? 'bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400' 
-                        : 'bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${device.status === 'Online' ? 'bg-green-500' : 'bg-orange-500'}`}></span>
-                      {device.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4 text-right text-slate-600 dark:text-neutral-400">{device.lastMaintenance}</td>
                 </tr>
-              ))}
+              ) : (
+                initialDevices.map((device) => (
+                  <tr key={device.id} className="hover:bg-slate-50/50 dark:hover:bg-neutral-800/30 transition-colors cursor-pointer group">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-slate-100 dark:bg-neutral-800 rounded-lg group-hover:bg-white dark:group-hover:bg-neutral-700 transition-colors">
+                          <Cpu className="w-4 h-4 text-slate-600 dark:text-neutral-400" />
+                        </div>
+                        <span className="font-medium text-slate-800 dark:text-neutral-200">{device.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-slate-600 dark:text-neutral-400 text-sm">{device.category}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border
+                        ${device.workload_intensity === 'LIGHT' ? 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20' : 
+                          device.workload_intensity === 'HEAVY' ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/20' : 
+                          'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'}`}
+                      >
+                        {device.workload_intensity}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-neutral-500 text-right">
+                      {new Date(device.created_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      <AddDeviceModal 
+        workspaceId={workspace.id}
+        isOpen={isAddDeviceOpen}
+        onClose={() => setIsAddDeviceOpen(false)}
+      />
     </div>
   );
 }

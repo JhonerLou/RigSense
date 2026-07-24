@@ -17,6 +17,7 @@ export default async function WorkspaceDetailsPage({
   const token = session?.access_token;
 
   let workspace = null;
+  let devices: any[] = [];
   let errorMsg = null;
 
   try {
@@ -31,6 +32,16 @@ export default async function WorkspaceDetailsPage({
     } else {
       const result = await res.json();
       workspace = result.data;
+
+      // Fetch devices
+      const devRes = await fetch(`http://localhost:8080/api/workspaces/${id}/devices`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      });
+      if (devRes.ok) {
+        const devResult = await devRes.json();
+        devices = devResult.data || [];
+      }
     }
   } catch {
     errorMsg = 'Backend server is unreachable. Is it running on port 8080?';
@@ -75,7 +86,7 @@ export default async function WorkspaceDetailsPage({
           </div>
         </div>
       ) : workspace ? (
-        <WorkspaceClient workspace={workspace} />
+        <WorkspaceClient workspace={workspace} initialDevices={devices} />
       ) : null}
     </div>
   );
