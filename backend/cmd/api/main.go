@@ -12,6 +12,14 @@ import (
 	workspaceRepo "hardware-tracker-backend/internal/module/workspace/repository"
 	workspaceUsecase "hardware-tracker-backend/internal/module/workspace/usecase"
 
+	deviceHttp "hardware-tracker-backend/internal/module/device/delivery/http"
+	deviceRepo "hardware-tracker-backend/internal/module/device/repository"
+	deviceUsecase "hardware-tracker-backend/internal/module/device/usecase"
+
+	maintenanceHttp "hardware-tracker-backend/internal/module/maintenance/delivery/http"
+	maintenanceRepo "hardware-tracker-backend/internal/module/maintenance/repository"
+	maintenanceUsecase "hardware-tracker-backend/internal/module/maintenance/usecase"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,9 +35,17 @@ func main() {
 	}
 	defer dbPool.Close()
 
-	// Wire Usecases & Repositories
+	// Wire Workspace Module
 	wsRepo := workspaceRepo.NewWorkspaceRepository(dbPool)
 	wsUsecase := workspaceUsecase.NewWorkspaceUsecase(wsRepo)
+
+	// Wire Device Module
+	devRepo := deviceRepo.NewDeviceRepository(dbPool)
+	devUsecase := deviceUsecase.NewDeviceUsecase(devRepo, wsRepo)
+
+	// Wire Maintenance Module
+	maintRepo := maintenanceRepo.NewMaintenanceRepository(dbPool)
+	maintUsecase := maintenanceUsecase.NewMaintenanceUsecase(maintRepo, devRepo, wsRepo)
 	
 	router := gin.Default()
 
@@ -55,6 +71,12 @@ func main() {
 
 		// Register Workspace routes
 		workspaceHttp.NewWorkspaceHandler(protected, wsUsecase)
+
+		// Register Device routes
+		deviceHttp.NewDeviceHandler(protected, devUsecase)
+
+		// Register Maintenance routes
+		maintenanceHttp.NewMaintenanceHandler(protected, maintUsecase)
 	}
 
 	log.Printf("Server is starting on port %s...", cfg.Port)

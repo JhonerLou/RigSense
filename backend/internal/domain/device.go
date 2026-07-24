@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,26 +37,34 @@ type Device struct {
 }
 
 type DeviceRepository interface {
-	Create(device *Device) error
-	GetByID(id uuid.UUID) (*Device, error)
-	GetByWorkspaceID(workspaceID uuid.UUID) ([]*Device, error)
-	Update(device *Device) error
-	Delete(id uuid.UUID) error
+	CreateWithParts(ctx context.Context, device *Device, parts []*DevicePart) error
+	GetByID(ctx context.Context, id uuid.UUID) (*Device, error)
+	GetByWorkspaceID(ctx context.Context, workspaceID uuid.UUID) ([]*Device, error)
+	Update(ctx context.Context, device *Device) error
+	Delete(ctx context.Context, id uuid.UUID) error
 }
 
 type DeviceUsecase interface {
-	CreateDevice(req *CreateDeviceRequest) (*Device, error)
-	GetDevice(id uuid.UUID) (*Device, error)
-	ListDevicesByWorkspace(workspaceID uuid.UUID) ([]*Device, error)
+	CreateDevice(ctx context.Context, userID string, req *CreateDeviceRequest) (*Device, error)
+	GetDevice(ctx context.Context, id uuid.UUID, userID string) (*Device, error)
+	ListDevicesByWorkspace(ctx context.Context, workspaceID uuid.UUID, userID string) ([]*Device, error)
 }
 
 type CreateDeviceRequest struct {
-	WorkspaceID       uuid.UUID         `json:"workspace_id" binding:"required"`
-	Name              string            `json:"name" binding:"required"`
-	Category          DeviceCategory    `json:"category" binding:"required"`
-	WorkloadIntensity WorkloadIntensity `json:"workload_intensity"`
-	PurchaseDate      *time.Time        `json:"purchase_date"`
-	EstimatedPrice    float64           `json:"estimated_price"`
+	WorkspaceID       uuid.UUID                 `json:"workspace_id" binding:"required"`
+	Name              string                    `json:"name" binding:"required"`
+	Category          DeviceCategory            `json:"category" binding:"required"`
+	WorkloadIntensity WorkloadIntensity         `json:"workload_intensity"`
+	PurchaseDate      *time.Time                `json:"purchase_date"`
+	EstimatedPrice    float64                   `json:"estimated_price"`
+	Parts             []CreateDevicePartRequest `json:"parts,omitempty"`
+}
+
+type CreateDevicePartRequest struct {
+	PartType          PartType   `json:"part_type" binding:"required"`
+	Name              string     `json:"name" binding:"required"`
+	PurchaseDate      *time.Time `json:"purchase_date"`
+	WarrantyExpiresAt *time.Time `json:"warranty_expires_at"`
 }
 
 type PartType string
