@@ -36,7 +36,7 @@ export default function WorkspaceClient({ workspace, initialDevices }: { workspa
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       
-      const res = await fetch(`http://localhost:8080/api/workspaces/${workspace.id}/health-scan`, {
+      const res = await fetch(`http://localhost:8080/api/workspaces/${workspace.id as string}/health-scan`, {
         headers: { Authorization: `Bearer ${session?.access_token}` }
       });
       
@@ -339,7 +339,7 @@ export default function WorkspaceClient({ workspace, initialDevices }: { workspa
       </div>
 
       <AddDeviceModal 
-        workspaceId={workspace.id}
+        workspaceId={workspace.id as string}
         isOpen={isAddDeviceOpen}
         onClose={() => setIsAddDeviceOpen(false)}
       />
@@ -379,7 +379,7 @@ export default function WorkspaceClient({ workspace, initialDevices }: { workspa
                     </div>
                     <div>
                       <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{healthScanData.status}</h3>
-                      <p className="text-slate-600 dark:text-slate-300">Based on the current environment ({workspace.environment_type}) and telemetry data, the overall hardware health is considered <strong className="lowercase">{healthScanData.status}</strong>.</p>
+                      <p className="text-slate-600 dark:text-slate-300">Based on the current environment ({workspace.environment_type as string}) and telemetry data, the overall hardware health is considered <strong className="lowercase">{healthScanData.status as string}</strong>.</p>
                     </div>
                   </div>
                   
