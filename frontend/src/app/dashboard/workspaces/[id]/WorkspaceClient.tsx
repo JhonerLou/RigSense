@@ -1,9 +1,9 @@
 'use client';
 
 import { 
-  LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar 
+  LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import { Thermometer, Wind, Zap, ShieldCheck, Activity, Server, Cpu, Filter } from 'lucide-react';
+import { Thermometer, Wind, Zap, Activity, Server, Cpu, Filter } from 'lucide-react';
 
 const mockChartData = [
   { time: '08:00', dust: 12, temp: 22, humidity: 45 },
@@ -20,7 +20,7 @@ const mockDevices = [
   { id: '3', name: 'Cooling Unit 1', type: 'HVAC', status: 'Online', lastMaintenance: '1 week ago' },
 ];
 
-export default function WorkspaceClient({ workspace }: { workspace: any }) {
+export default function WorkspaceClient({ workspace }: { workspace: Record<string, unknown> }) {
   const isAC = workspace.facility_type === 'AC';
   
   return (

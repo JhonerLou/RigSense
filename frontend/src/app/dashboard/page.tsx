@@ -33,7 +33,7 @@ export default async function DashboardPage() {
       const result = await res.json();
       workspaces = result.data || [];
     }
-  } catch (e: any) {
+  } catch {
     errorMsg = 'Backend server is unreachable. Is it running on port 8080?';
   }
 
@@ -47,7 +47,7 @@ export default async function DashboardPage() {
             Overview Dashboard
           </h1>
           <p className="text-slate-500 dark:text-neutral-400 mt-1 text-sm">
-            Welcome back! Here is what's happening across all your facilities.
+            Welcome back! Here is what&apos;s happening across all your facilities.
           </p>
         </div>
         
@@ -154,7 +154,7 @@ export default async function DashboardPage() {
                 <Server className="w-12 h-12 text-slate-400 dark:text-neutral-600 mb-4" />
                 <h3 className="text-slate-700 dark:text-neutral-300 font-medium text-lg">No workspaces found</h3>
                 <p className="text-slate-500 dark:text-neutral-500 text-sm mt-2 max-w-sm">
-                  You haven't created any workspaces yet. Click the "Add Workspace" button above to start tracking hardware.
+                  You haven&apos;t created any workspaces yet. Click the &quot;Add Workspace&quot; button above to start tracking hardware.
                 </p>
               </div>
             ) : (

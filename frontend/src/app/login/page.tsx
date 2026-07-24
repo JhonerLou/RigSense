@@ -294,7 +294,7 @@ export default function LoginPage() {
               </>
             ) : (
               <>
-                <span className="text-slate-600 dark:text-neutral-400">Don't have an account? </span>
+                <span className="text-slate-600 dark:text-neutral-400">Don&apos;t have an account? </span>
                 <span className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">Sign Up</span>
               </>
             )}

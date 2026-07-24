@@ -51,8 +51,12 @@ export default function AddWorkspaceButton() {
       // Refresh the server component to show the new workspace
       router.refresh();
       
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     } finally {
       setIsLoading(false);
     }

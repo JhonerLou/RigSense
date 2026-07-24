@@ -32,7 +32,7 @@ export default async function WorkspaceDetailsPage({
       const result = await res.json();
       workspace = result.data;
     }
-  } catch (e: any) {
+  } catch {
     errorMsg = 'Backend server is unreachable. Is it running on port 8080?';
   }
 
