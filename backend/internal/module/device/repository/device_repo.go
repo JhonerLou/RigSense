@@ -78,8 +78,27 @@ func (r *deviceRepository) CreateWithParts(ctx context.Context, device *domain.D
 }
 
 func (r *deviceRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Device, error) {
-	// To be implemented
-	return nil, fmt.Errorf("not implemented")
+	query := `
+		SELECT id, workspace_id, name, category, workload_intensity, purchase_date, estimated_price, created_at, ai_health_summary, last_ai_analyzed_at
+		FROM devices
+		WHERE id = $1
+	`
+	dev := &domain.Device{}
+	var aiSummary interface{}
+	err := r.db.QueryRow(ctx, query, id).Scan(
+		&dev.ID, &dev.WorkspaceID, &dev.Name, &dev.Category, 
+		&dev.WorkloadIntensity, &dev.PurchaseDate, &dev.EstimatedPrice, 
+		&dev.CreatedAt, &aiSummary, &dev.LastAIAnalyzedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("deviceRepository.GetByID: %w", err)
+	}
+	if aiSummary != nil {
+		if s, ok := aiSummary.(string); ok {
+			dev.AIHealthSummary = &s
+		}
+	}
+	return dev, nil
 }
 
 func (r *deviceRepository) GetByWorkspaceID(ctx context.Context, workspaceID uuid.UUID) ([]*domain.Device, error) {
@@ -115,9 +134,44 @@ func (r *deviceRepository) GetByWorkspaceID(ctx context.Context, workspaceID uui
 	return devices, nil
 }
 
+func (r *deviceRepository) GetPartsByDeviceID(ctx context.Context, deviceID uuid.UUID) ([]*domain.DevicePart, error) {
+	query := `
+		SELECT id, device_id, part_type, name, purchase_date, warranty_expires_at, created_at
+		FROM device_parts
+		WHERE device_id = $1
+	`
+	rows, err := r.db.Query(ctx, query, deviceID)
+	if err != nil {
+		return nil, fmt.Errorf("deviceRepository.GetPartsByDeviceID: %w", err)
+	}
+	defer rows.Close()
+
+	var parts []*domain.DevicePart
+	for rows.Next() {
+		p := &domain.DevicePart{}
+		err := rows.Scan(&p.ID, &p.DeviceID, &p.PartType, &p.Name, &p.PurchaseDate, &p.WarrantyExpiresAt, &p.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("deviceRepository.GetPartsByDeviceID scan: %w", err)
+		}
+		parts = append(parts, p)
+	}
+	if parts == nil {
+		parts = make([]*domain.DevicePart, 0)
+	}
+	return parts, nil
+}
+
 func (r *deviceRepository) Update(ctx context.Context, device *domain.Device) error {
-	// To be implemented
-	return fmt.Errorf("not implemented")
+	query := `
+		UPDATE devices
+		SET ai_health_summary = $1, last_ai_analyzed_at = $2
+		WHERE id = $3
+	`
+	_, err := r.db.Exec(ctx, query, device.AIHealthSummary, device.LastAIAnalyzedAt, device.ID)
+	if err != nil {
+		return fmt.Errorf("deviceRepository.Update: %w", err)
+	}
+	return nil
 }
 
 func (r *deviceRepository) Delete(ctx context.Context, id uuid.UUID) error {

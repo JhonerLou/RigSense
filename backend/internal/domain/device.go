@@ -40,6 +40,7 @@ type DeviceRepository interface {
 	CreateWithParts(ctx context.Context, device *Device, parts []*DevicePart) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Device, error)
 	GetByWorkspaceID(ctx context.Context, workspaceID uuid.UUID) ([]*Device, error)
+	GetPartsByDeviceID(ctx context.Context, deviceID uuid.UUID) ([]*DevicePart, error)
 	Update(ctx context.Context, device *Device) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }

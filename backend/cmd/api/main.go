@@ -24,6 +24,10 @@ import (
 	serviceLogRepo "hardware-tracker-backend/internal/module/servicelog/repository"
 	serviceLogUsecase "hardware-tracker-backend/internal/module/servicelog/usecase"
 
+	aiPkg "hardware-tracker-backend/internal/pkg/ai"
+	aiHttp "hardware-tracker-backend/internal/module/ai/delivery/http"
+	aiUsecase "hardware-tracker-backend/internal/module/ai/usecase"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -54,6 +58,17 @@ func main() {
 	// Wire Service Log Module
 	slRepo := serviceLogRepo.NewServiceLogRepository(dbPool)
 	slUsecase := serviceLogUsecase.NewServiceLogUsecase(slRepo, maintUsecase, maintRepo)
+
+	// Init Gemini Client
+	geminiClient, err := aiPkg.NewGeminiClient(ctx, cfg.GeminiAPIKey)
+	if err != nil {
+		log.Printf("Warning: failed to initialize Gemini AI SDK: %v", err)
+	} else {
+		defer geminiClient.Close()
+	}
+
+	// Wire AI Module
+	aiUc := aiUsecase.NewAIUsecase(geminiClient, devRepo, wsRepo)
 	
 	router := gin.Default()
 
@@ -66,7 +81,7 @@ func main() {
 
 	// Protected routes group
 	protected := router.Group("/api")
-	protected.Use(middleware.SupabaseAuthMiddleware(cfg.JWTSecret))
+	protected.Use(middleware.SupabaseAuthMiddleware(cfg.SupabaseJWTSecret))
 	{
 		// Example protected route
 		protected.GET("/me", func(c *gin.Context) {
@@ -88,6 +103,9 @@ func main() {
 
 		// Register Service Log routes
 		serviceLogHttp.NewServiceLogHandler(protected, slUsecase)
+
+		// Register AI routes
+		aiHttp.NewAIHandler(protected, aiUc)
 	}
 
 	log.Printf("Server is starting on port %s...", cfg.Port)
