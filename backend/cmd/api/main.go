@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
+	"github.com/MicahParks/keyfunc/v2"
 	"hardware-tracker-backend/config"
 	"hardware-tracker-backend/internal/delivery/http/middleware"
 	"hardware-tracker-backend/internal/infrastructure/database"
@@ -89,9 +91,20 @@ func main() {
 		})
 	})
 
+	// Initialize JWKS for ES256 JWT validation
+	jwksURL := cfg.SupabaseURL + "/auth/v1/.well-known/jwks.json"
+	options := keyfunc.Options{
+		RefreshInterval: time.Hour,
+	}
+	jwks, err := keyfunc.Get(jwksURL, options)
+	if err != nil {
+		log.Fatalf("Failed to initialize JWKS from Supabase: %v", err)
+	}
+	log.Printf("Successfully loaded JWKS for ES256 JWT validation")
+
 	// Protected routes group
 	protected := router.Group("/api")
-	protected.Use(middleware.SupabaseAuthMiddleware(cfg.SupabaseJWTSecret))
+	protected.Use(middleware.SupabaseAuthMiddleware(jwks))
 	{
 		// Example protected route
 		protected.GET("/me", func(c *gin.Context) {

@@ -11,7 +11,6 @@ type Config struct {
 	DatabaseURL       string
 	SupabaseURL       string
 	SupabaseKey       string
-	SupabaseJWTSecret string
 	GeminiAPIKey      string
 	Port              string
 }
@@ -30,7 +29,6 @@ func Load() *Config {
 		DatabaseURL:       os.Getenv("DATABASE_URL"),
 		SupabaseURL:       os.Getenv("SUPABASE_URL"),
 		SupabaseKey:       os.Getenv("SUPABASE_KEY"),
-		SupabaseJWTSecret: os.Getenv("SUPABASE_JWT_SECRET"),
 		GeminiAPIKey:      os.Getenv("GEMINI_API_KEY"),
 		Port:              port,
 	}

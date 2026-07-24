@@ -1,16 +1,16 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
+	"github.com/MicahParks/keyfunc/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 // SupabaseAuthMiddleware verifies the JWT token sent in the Authorization header.
-func SupabaseAuthMiddleware(jwtSecret string) gin.HandlerFunc {
+func SupabaseAuthMiddleware(jwks *keyfunc.JWKS) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -26,15 +26,8 @@ func SupabaseAuthMiddleware(jwtSecret string) gin.HandlerFunc {
 
 		tokenString := parts[1]
 
-		// Parse and validate the token
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			// Validate the algorithm is what we expect (Supabase uses HS256)
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(jwtSecret), nil
-		})
-
+		// Parse and validate the token using the JWKS public keys
+		token, err := jwt.Parse(tokenString, jwks.Keyfunc)
 		if err != nil || !token.Valid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			return
