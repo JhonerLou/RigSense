@@ -25,8 +25,8 @@ func NewDeviceHandler(rg *gin.RouterGroup, usecase domain.DeviceUsecase) {
 		devGroup.POST("", handler.Create)
 	}
 
-	// Routes under /api/workspaces/:workspaceID/devices
-	wsDevGroup := rg.Group("/workspaces/:workspaceID/devices")
+	// Routes under /api/workspaces/:id/devices
+	wsDevGroup := rg.Group("/workspaces/:id/devices")
 	{
 		wsDevGroup.GET("", handler.ListByWorkspace)
 	}
@@ -65,7 +65,7 @@ func (h *DeviceHandler) ListByWorkspace(c *gin.Context) {
 	}
 	userID := userIDVal.(string)
 
-	wsIDStr := c.Param("workspaceID")
+	wsIDStr := c.Param("id")
 	workspaceID, err := uuid.Parse(wsIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid workspace ID format"})
