@@ -3,7 +3,7 @@
 -- ==========================================
 
 -- Bersihkan data lama jika ada (Hati-hati, ini akan menghapus data!)
-TRUNCATE TABLE service_logs, maintenance_tasks, devices, workspaces CASCADE;
+TRUNCATE TABLE service_logs, maintenance_tasks, device_parts, devices, workspaces CASCADE;
 
 -- Insert Workspaces (2 Ruangan)
 -- Kita asumsikan user_id menggunakan UUID statis: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'
@@ -41,3 +41,18 @@ INSERT INTO service_logs (task_id, performed_at, cost_spent, notes) VALUES
 
 -- Log untuk servis kipas ROG lama (Tahun 2023)
 ('t3333333-3333-3333-3333-333333333333', '2023-02-10', 250000.00, 'Bawa ke ASUS Service Center Roxy. Dibersihkan debu membandel di heatsink. Ganti Thermal Grizzly Conductonaut.');
+
+
+-- Insert Device Parts (Komponen Spesifik)
+INSERT INTO device_parts (id, device_id, part_type, name, purchase_date, warranty_expires_at) VALUES
+-- Komponen untuk PC Custom Desktop
+('p1111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 'CPU', 'Intel Core i5-13400F', '2023-05-10', '2026-05-10'),
+('p2222222-2222-2222-2222-222222222222', 'd1111111-1111-1111-1111-111111111111', 'GPU', 'ZOTAC GAMING GeForce RTX 4060 8GB', '2023-05-10', '2026-05-10'),
+('p3333333-3333-3333-3333-333333333333', 'd1111111-1111-1111-1111-111111111111', 'RAM', 'Corsair Vengeance RGB 32GB (2x16GB) DDR5 6000MHz', '2023-05-10', '2033-05-10'),
+('p4444444-4444-4444-4444-444444444444', 'd1111111-1111-1111-1111-111111111111', 'MOTHERBOARD', 'ASRock B760M Steel Legend WiFi', '2023-05-10', '2026-05-10'),
+('p5555555-5555-5555-5555-555555555555', 'd1111111-1111-1111-1111-111111111111', 'PSU', 'Corsair RM650 80+ Gold', '2023-05-10', '2030-05-10'),
+('p6666666-6666-6666-6666-666666666666', 'd1111111-1111-1111-1111-111111111111', 'COOLER', 'Deepcool AK400 Digital', '2023-05-10', '2024-05-10'),
+
+-- Komponen penting untuk Laptop ROG G14 (yang biasa rawan rusak/perlu diganti)
+('p7777777-7777-7777-7777-777777777777', 'd5555555-5555-5555-5555-555555555555', 'STORAGE', 'Samsung 980 PRO 1TB PCIe 4.0 NVMe', '2022-08-10', '2027-08-10'),
+('p8888888-8888-8888-8888-888888888888', 'd5555555-5555-5555-5555-555555555555', 'COOLER', 'Dual Fan Assembly (CPU & GPU)', '2022-08-10', '2024-08-10');
