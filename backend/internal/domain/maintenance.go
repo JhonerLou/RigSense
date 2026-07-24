@@ -47,4 +47,5 @@ type MaintenanceUsecase interface {
 	CreateTask(ctx context.Context, userID string, req *CreateMaintenanceTaskRequest) (*MaintenanceTask, error)
 	ListTasksByDevice(ctx context.Context, userID string, deviceID uuid.UUID) ([]*MaintenanceTask, error)
 	RefreshTaskStatus(ctx context.Context, taskID uuid.UUID) (*MaintenanceTask, error) // Evaluates and updates status based on dates
+	GetNextMaintenanceTarget(ctx context.Context, taskID uuid.UUID, userID string, lastPerformed time.Time) (time.Time, MaintenanceStatus, error)
 }

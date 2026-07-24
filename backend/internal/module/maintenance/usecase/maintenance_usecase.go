@@ -155,3 +155,26 @@ func (u *maintenanceUsecase) RefreshTaskStatus(ctx context.Context, taskID uuid.
 	}
 	return task, nil
 }
+
+func (u *maintenanceUsecase) GetNextMaintenanceTarget(ctx context.Context, taskID uuid.UUID, userID string, lastPerformed time.Time) (time.Time, domain.MaintenanceStatus, error) {
+	task, err := u.maintenanceRepo.GetByID(ctx, taskID)
+	if err != nil {
+		return time.Time{}, "", fmt.Errorf("maintenanceUsecase.GetNextMaintenanceTarget task: %w", err)
+	}
+
+	device, err := u.deviceRepo.GetByID(ctx, task.DeviceID)
+	if err != nil {
+		return time.Time{}, "", fmt.Errorf("maintenanceUsecase.GetNextMaintenanceTarget device: %w", err)
+	}
+
+	workspace, err := u.workspaceRepo.GetByID(ctx, device.WorkspaceID.String(), userID)
+	if err != nil {
+		return time.Time{}, "", fmt.Errorf("maintenanceUsecase.GetNextMaintenanceTarget workspace auth: %w", err)
+	}
+
+	nextDue := u.calculateNextDueDate(task.BaseIntervalMonths, device.WorkloadIntensity, workspace.DustLevel, &lastPerformed)
+	status := evaluateStatus(nextDue)
+
+	return nextDue, status, nil
+}
+

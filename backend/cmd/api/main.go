@@ -20,6 +20,10 @@ import (
 	maintenanceRepo "hardware-tracker-backend/internal/module/maintenance/repository"
 	maintenanceUsecase "hardware-tracker-backend/internal/module/maintenance/usecase"
 
+	serviceLogHttp "hardware-tracker-backend/internal/module/servicelog/delivery/http"
+	serviceLogRepo "hardware-tracker-backend/internal/module/servicelog/repository"
+	serviceLogUsecase "hardware-tracker-backend/internal/module/servicelog/usecase"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -46,6 +50,10 @@ func main() {
 	// Wire Maintenance Module
 	maintRepo := maintenanceRepo.NewMaintenanceRepository(dbPool)
 	maintUsecase := maintenanceUsecase.NewMaintenanceUsecase(maintRepo, devRepo, wsRepo)
+
+	// Wire Service Log Module
+	slRepo := serviceLogRepo.NewServiceLogRepository(dbPool)
+	slUsecase := serviceLogUsecase.NewServiceLogUsecase(slRepo, maintUsecase, maintRepo)
 	
 	router := gin.Default()
 
@@ -77,6 +85,9 @@ func main() {
 
 		// Register Maintenance routes
 		maintenanceHttp.NewMaintenanceHandler(protected, maintUsecase)
+
+		// Register Service Log routes
+		serviceLogHttp.NewServiceLogHandler(protected, slUsecase)
 	}
 
 	log.Printf("Server is starting on port %s...", cfg.Port)
