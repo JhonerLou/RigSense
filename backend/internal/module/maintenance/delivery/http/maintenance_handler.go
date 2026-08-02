@@ -21,6 +21,7 @@ func NewMaintenanceHandler(rg *gin.RouterGroup, usecase domain.MaintenanceUsecas
 	mGroup := rg.Group("/maintenance-tasks")
 	{
 		mGroup.POST("", handler.Create)
+		mGroup.GET("/overview", handler.GetOverview)
 	}
 
 	// Route to get tasks by device
@@ -75,4 +76,21 @@ func (h *MaintenanceHandler) ListByDevice(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": tasks})
+}
+
+func (h *MaintenanceHandler) GetOverview(c *gin.Context) {
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userID := userIDVal.(string)
+
+	overviews, err := h.usecase.GetMaintenanceOverview(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": overviews})
 }

@@ -35,12 +35,22 @@ type CreateMaintenanceTaskRequest struct {
 	RiskImpactCost     float64   `json:"risk_impact_cost"`
 }
 
+type DeviceMaintenanceOverview struct {
+	DeviceID             uuid.UUID         `json:"device_id"`
+	DeviceName           string            `json:"device_name"`
+	Category             string            `json:"category"`
+	WorkspaceName        string            `json:"workspace_name"`
+	OverallStatus        MaintenanceStatus `json:"overall_status"`
+	TotalRiskImpactCost  float64           `json:"total_risk_impact_cost"`
+}
+
 type MaintenanceRepository interface {
 	Create(ctx context.Context, task *MaintenanceTask) error
 	GetByID(ctx context.Context, id uuid.UUID) (*MaintenanceTask, error)
 	ListByDeviceID(ctx context.Context, deviceID uuid.UUID) ([]*MaintenanceTask, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status MaintenanceStatus) error
 	Update(ctx context.Context, task *MaintenanceTask) error
+	GetOverviewByUserID(ctx context.Context, userID string) ([]*DeviceMaintenanceOverview, error)
 }
 
 type MaintenanceUsecase interface {
@@ -48,4 +58,5 @@ type MaintenanceUsecase interface {
 	ListTasksByDevice(ctx context.Context, userID string, deviceID uuid.UUID) ([]*MaintenanceTask, error)
 	RefreshTaskStatus(ctx context.Context, taskID uuid.UUID) (*MaintenanceTask, error) // Evaluates and updates status based on dates
 	GetNextMaintenanceTarget(ctx context.Context, taskID uuid.UUID, userID string, lastPerformed time.Time) (time.Time, MaintenanceStatus, error)
+	GetMaintenanceOverview(ctx context.Context, userID string) ([]*DeviceMaintenanceOverview, error)
 }

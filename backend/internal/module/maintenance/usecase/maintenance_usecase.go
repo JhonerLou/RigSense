@@ -178,3 +178,7 @@ func (u *maintenanceUsecase) GetNextMaintenanceTarget(ctx context.Context, taskI
 	return nextDue, status, nil
 }
 
+func (u *maintenanceUsecase) GetMaintenanceOverview(ctx context.Context, userID string) ([]*domain.DeviceMaintenanceOverview, error) {
+	return u.maintenanceRepo.GetOverviewByUserID(ctx, userID)
+}
+

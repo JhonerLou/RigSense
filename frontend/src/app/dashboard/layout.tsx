@@ -4,10 +4,11 @@ import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { LayoutDashboard, BookOpen, Bot, LogOut, Menu, X, Settings } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Bot, LogOut, Menu, X, Settings, Wrench } from 'lucide-react';
 
 const navItems = [
   { name: 'My Workspaces', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Predictive Maintenance', href: '/dashboard/maintenance', icon: Wrench },
   { name: 'Service Logbook', href: '/dashboard/logbook', icon: BookOpen },
   { name: 'AI Assistant', href: '/dashboard/ai', icon: Bot },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },

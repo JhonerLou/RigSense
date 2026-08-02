@@ -143,3 +143,62 @@ func (r *maintenanceRepository) Update(ctx context.Context, task *domain.Mainten
 	}
 	return nil
 }
+
+func (r *maintenanceRepository) GetOverviewByUserID(ctx context.Context, userID string) ([]*domain.DeviceMaintenanceOverview, error) {
+	query := `
+		SELECT 
+			d.id as device_id,
+			d.name as device_name,
+			d.category,
+			w.name as workspace_name,
+			COALESCE(SUM(
+				CASE 
+					WHEN mt.status IN ('DUE_SOON', 'OVERDUE') THEN mt.risk_impact_cost 
+					ELSE 0 
+				END
+			), 0) as total_risk_impact_cost,
+			CASE
+				WHEN COUNT(CASE WHEN mt.status = 'OVERDUE' THEN 1 END) > 0 THEN 'OVERDUE'
+				WHEN COUNT(CASE WHEN mt.status = 'DUE_SOON' THEN 1 END) > 0 THEN 'DUE_SOON'
+				ELSE 'OK'
+			END as overall_status
+		FROM devices d
+		JOIN workspaces w ON d.workspace_id = w.id
+		LEFT JOIN maintenance_tasks mt ON mt.device_id = d.id
+		WHERE w.user_id = $1
+		GROUP BY d.id, d.name, d.category, w.name
+		ORDER BY 
+			CASE 
+				WHEN COUNT(CASE WHEN mt.status = 'OVERDUE' THEN 1 END) > 0 THEN 1
+				WHEN COUNT(CASE WHEN mt.status = 'DUE_SOON' THEN 1 END) > 0 THEN 2
+				ELSE 3
+			END ASC,
+			total_risk_impact_cost DESC
+	`
+	rows, err := r.db.Query(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("maintenanceRepository.GetOverviewByUserID query: %w", err)
+	}
+	defer rows.Close()
+
+	var overviews []*domain.DeviceMaintenanceOverview
+	for rows.Next() {
+		o := &domain.DeviceMaintenanceOverview{}
+		var statusStr string
+		err := rows.Scan(
+			&o.DeviceID, &o.DeviceName, &o.Category, &o.WorkspaceName,
+			&o.TotalRiskImpactCost, &statusStr,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("maintenanceRepository.GetOverviewByUserID scan: %w", err)
+		}
+		o.OverallStatus = domain.MaintenanceStatus(statusStr)
+		overviews = append(overviews, o)
+	}
+
+	if overviews == nil {
+		overviews = make([]*domain.DeviceMaintenanceOverview, 0)
+	}
+
+	return overviews, nil
+}
